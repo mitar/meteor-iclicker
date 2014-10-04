@@ -1,17 +1,17 @@
-iClickerPoll
-============
+iClicker base station Meteor bridge
+===================================
 
-iClickerPoll is a Python interface to the iClicker base unit.
-It should be compatible with an operating system that supports
-libusb, and in particular, GNU/Linux.
-
+iClicker base station Meteor bridge is a Python program which connects a
+base station to a Meteor application.
 
 Requirements
 ------------
 
-* Python 2.x/3.x
+* Python
 * pyusb
+* pyddp
 
+USB communication works stable on a 1-CPU machine. Probably issues with threading.
 
 Usage
 -----
