@@ -162,8 +162,7 @@ class IClickerBase(object):
         """
 
         with self.usb_lock:
-            ret = Command(self.device.read(0x83, 64, timeout=timeout))
-        return ret
+            return Command(self.device.read(0x83, 64, timeout=timeout))
 
     def _syncronous_write(self, data, timeout=100):
         """
@@ -191,15 +190,18 @@ class IClickerBase(object):
                 while True:
                     self._read()
             except usb.USBError, e:
-                print("a", e)
-                pass
+                # We ignore "Operation timed out" exception
+                if getattr(e, 'errno', None) == 110:
+                    return None
+                else:
+                    print("a", e)
 
     def read(self, timeout=100):
         try:
             return Command(self._read(timeout))
         except Exception, e:
             # We ignore "Operation timed out" exception
-            if e.errno == 110:
+            if getattr(e, 'errno', None) == 110:
                 return None
             else:
                 print("b", e)
@@ -233,21 +235,23 @@ class IClickerBase(object):
             return code
 
         time.sleep(0.2)
-        cmd = Command([0x01, 0x10, 0x21 + code_to_number(code1), 0x41 + code_to_number(code2)])
-        self._syncronous_write(cmd)
-        time.sleep(0.2)
-        cmd = Command([0x01, 0x16])
-        self._syncronous_write(cmd)
-        time.sleep(0.2)
+        with self.usb_lock:
+            cmd = Command([0x01, 0x10, 0x21 + code_to_number(code1), 0x41 + code_to_number(code2)])
+            self._syncronous_write(cmd)
+            time.sleep(0.2)
+            cmd = Command([0x01, 0x16])
+            self._syncronous_write(cmd)
+            time.sleep(0.2)
 
     def set_version_two_protocol(self):
         """
         Sets the base unit to use the iClicker version 2 protocol.
         """
 
-        cmd = Command([0x01, 0x2d])
-        self._write(cmd)
-        time.sleep(0.2)
+        with self.usb_lock:
+            cmd = Command([0x01, 0x2d])
+            self._write(cmd)
+            time.sleep(0.2)
 
     def set_poll_type(self, poll_type='alpha'):
         """
@@ -256,10 +260,11 @@ class IClickerBase(object):
 
         print("Setting poll type to {0}".format(poll_type))
 
-        poll_type = {'alpha': 0, 'numeric': 1, 'alphanumeric': 2}[poll_type]
-        cmd = Command([0x01, 0x19, 0x66 + poll_type, 0x0a, 0x01])
-        self._write(cmd)
-        time.sleep(0.2)
+        with self.usb_lock:
+            poll_type = {'alpha': 0, 'numeric': 1, 'alphanumeric': 2}[poll_type]
+            cmd = Command([0x01, 0x19, 0x66 + poll_type, 0x0a, 0x01])
+            self._write(cmd)
+            time.sleep(0.2)
 
     # TODO: There are still a lot of unknowns here... right now
     # It just repeats what was snooped from USB on Windows
@@ -281,11 +286,12 @@ class IClickerBase(object):
         if self.device is None:
             self.get_base()
 
-        self.set_base_frequency(freq1, freq2)
-        self._write_command_sequence(COMMAND_SEQUENCE_A)
-        self.set_version_two_protocol()
-        self._write_command_sequence(COMMAND_SEQUENCE_B)
-        self.has_initialized = True
+        with self.usb_lock:
+            self.set_base_frequency(freq1, freq2)
+            self._write_command_sequence(COMMAND_SEQUENCE_A)
+            self.set_version_two_protocol()
+            self._write_command_sequence(COMMAND_SEQUENCE_B)
+            self.has_initialized = True
 
     def start_poll(self, poll_type='alpha'):
         COMMAND_SEQUENCE_A = [
@@ -294,10 +300,11 @@ class IClickerBase(object):
         ]
         COMMAND_START_POLL = Command('01 11')
 
-        self._write_command_sequence(COMMAND_SEQUENCE_A)
-        self.set_poll_type(poll_type)
-        self._write(COMMAND_START_POLL)
-        time.sleep(0.2)
+        with self.usb_lock:
+            self._write_command_sequence(COMMAND_SEQUENCE_A)
+            self.set_poll_type(poll_type)
+            self._write(COMMAND_START_POLL)
+            time.sleep(0.2)
 
     def stop_poll(self):
         COMMAND_SEQUENCE_A = [
@@ -308,8 +315,9 @@ class IClickerBase(object):
             Command('01 17 04'),
         ]
 
-        self._write_command_sequence(COMMAND_SEQUENCE_A)
-    
+        with self.usb_lock:
+            self._write_command_sequence(COMMAND_SEQUENCE_A)
+
     def _set_screen(self, line=0):
         """
         Sets the line @line to the characters specified by self.screen_buffer[line].
@@ -330,7 +338,8 @@ class IClickerBase(object):
 
         self.last_set_screen_time = time.time()
 
-        self._write(cmd)
+        with self.usb_lock:
+            self._write(cmd)
 
     def set_screen(self, string, line=0, force_update=False):
         """
@@ -458,12 +467,14 @@ class IClickerPoll(object):
 
         self.display_update_loop()
         while self.poll_stopped is False:
-            response = self.base.read(50)
+            with self.base.usb_lock:
+                response = self.base.read(50)
             # If there is no response, do nothing
             if response is None:
                 continue
             for info in response.response_info():
                 self.response(Response(info['clicker_id'], info['response'], time.time(), info['seq_num']))
+
             self.update_display()
 
     def display_update_loop(self, interval=1):
