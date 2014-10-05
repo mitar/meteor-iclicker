@@ -11,9 +11,8 @@ Requirements
 * pyusb
 * pyddp
 
-USB communication works stable on a 1-CPU machine. Probably issues with threading. Symptoms are clock
-not updating every second and polling not really opening despite all initialization commands finishing
-correctly.
+USB communication works stable on a single-core machine. Probably issues with threading. Symptom is
+polling not really opening despite all initialization commands finishing correctly.
 
 Usage
 -----

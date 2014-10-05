@@ -140,13 +140,10 @@ class IClickerBase(object):
 
     def __init__(self):
         self.device = None
-        self.last_set_screen_time = 0
         self.has_initialized = False
         # pyusb is not threadsafe, so we need to aquire a lock for all usb operations
         self.usb_lock = threading.RLock()
         self.screen_buffer = [' ' * 16, ' ' * 16]
-        # A list of which line of the screen needs to be updated
-        self.screen_queue = [False, False]
 
     def _write(self, data):
         """
@@ -182,29 +179,24 @@ class IClickerBase(object):
         """
 
         for cmd in seq:
-            try:
-                self._write(cmd)
-            except Exception, e:
-                print("c", e)
-            try:
-                while True:
+            self._write(cmd)
+            while True:
+                try:
                     self._read()
-            except usb.USBError, e:
-                # We ignore "Operation timed out" exception
-                if getattr(e, 'errno', None) == 110:
-                    return None
-                else:
-                    print("a", e)
+                except usb.USBError, e:
+                    # We ignore "Operation timed out" exception
+                    if getattr(e, 'errno', None) == 110:
+                        return
+                    raise
 
     def read(self, timeout=100):
         try:
             return Command(self._read(timeout))
-        except Exception, e:
+        except usb.USBError, e:
             # We ignore "Operation timed out" exception
             if getattr(e, 'errno', None) == 110:
                 return None
-            else:
-                print("b", e)
+            raise
 
     def get_base(self):
         """
@@ -222,6 +214,7 @@ class IClickerBase(object):
                 self.device.detach_kernel_driver(0)
         
             self.device.set_configuration()
+            time.sleep(0.2)
 
     def set_base_frequency(self, code1='a', code2='a'):
         """
@@ -289,8 +282,10 @@ class IClickerBase(object):
         with self.usb_lock:
             self.set_base_frequency(freq1, freq2)
             self._write_command_sequence(COMMAND_SEQUENCE_A)
+            time.sleep(0.2)
             self.set_version_two_protocol()
             self._write_command_sequence(COMMAND_SEQUENCE_B)
+            time.sleep(0.2)
             self.has_initialized = True
 
     def start_poll(self, poll_type='alpha'):
@@ -302,6 +297,7 @@ class IClickerBase(object):
 
         with self.usb_lock:
             self._write_command_sequence(COMMAND_SEQUENCE_A)
+            time.sleep(0.2)
             self.set_poll_type(poll_type)
             self._write(COMMAND_START_POLL)
             time.sleep(0.2)
@@ -317,12 +313,16 @@ class IClickerBase(object):
 
         with self.usb_lock:
             self._write_command_sequence(COMMAND_SEQUENCE_A)
+            time.sleep(0.2)
 
     def _set_screen(self, line=0):
         """
         Sets the line @line to the characters specified by self.screen_buffer[line].
         This command messes up the screen if it is sent too frequently.
         """
+
+        if not self.has_initialized:
+            return
 
         if line == 0:
             cmd = [0x01, 0x13]
@@ -336,49 +336,25 @@ class IClickerBase(object):
         cmd.extend(ord(c) for c in string)
         cmd = Command(cmd)
 
-        self.last_set_screen_time = time.time()
-
         with self.usb_lock:
             self._write(cmd)
+            time.sleep(0.05)
 
-    def set_screen(self, string, line=0, force_update=False):
+    def set_screen(self, string, line=0):
         """
         Sets the line @line to the characters specified by @string.
         This command messes up the screen if it is sent too frequently,
-        so an automatic delay is added between issuances of set_screen.
+        so do not call it too often.
         """
 
-        MIN_SCREEN_UPDATE_TIME = 0.1
-        
         # If our buffer hasn't changed, just exit - we don't even need to update the screen
-        if string == self.screen_buffer[line] and force_update is False:
+        if string == self.screen_buffer[line]:
             return
 
         # Set our buffer to the appropriate string
         self.screen_buffer[line] = string
-        self.screen_queue[line] = True
-        
-        def process_screen_queue(line):
-            # If the screen_queue is false, it means another thread already handled
-            # updating the screen for us
-            if self.screen_queue[line] is False:
-                return
 
-            # Make sure we don't send two write commands too frequently.
-            # If we have tried to send a command too recently, start a 
-            curr_time = time.time()
-            if curr_time - self.last_set_screen_time < MIN_SCREEN_UPDATE_TIME:
-                delay_duration = (MIN_SCREEN_UPDATE_TIME - (curr_time - self.last_set_screen_time))
-                timer = threading.Timer(delay_duration, process_screen_queue, [line])
-                timer.start()
-                return
-
-            # If the last write wasn't too recent, let's do it!
-            self.screen_queue[line] = False
-            self._set_screen(line)
-
-        process_screen_queue(line)
-
+        self._set_screen(line)
 
 class Response(object):
     """
@@ -424,9 +400,15 @@ class IClickerPoll(object):
         Updates the base display according to the poll results.
         """
 
-        # Write the distribution of votes to the second line of the display
-        out_string = " 0  0  0  0  0 "
-        self.base.set_screen(out_string, line=1)
+        with self.base.usb_lock:
+            try:
+                out_string = "TODO"
+                self.base.set_screen(out_string, line=1)
+            except:
+                # Because we restart inside USB lock, we know that another thread's while self.poll_stopped will not be false
+                self.restart()
+                assert self.poll_stopped == False
+                return
 
         # Write the time and number of total votes to the first line of the display
         secs = int(time.time() - self.poll_start_time)
@@ -435,26 +417,53 @@ class IClickerPoll(object):
 
         out_string_time = "{0}:{1:02}".format(mins, secs)
         out_string = "{0}{1:>{padding}}".format(out_string_time, self.responses, padding=(16 - len(out_string_time)))
-        self.base.set_screen(out_string, line=0)
+
+        with self.base.usb_lock:
+            try:
+                self.base.set_screen(out_string, line=0)
+            except:
+                # Because we restart inside USB lock, we know that another thread's while self.poll_stopped will not be false
+                self.restart()
+                assert self.poll_stopped == False
+
+    def restart(self):
+        print("Restarting iClicker USB connection")
+
+        try:
+            self.stop_poll()
+        except:
+            # We just ignore any errors while stopping
+            pass
+
+        print("Initializing iClicker Base")
+        self.base.initialize()
+        print("Restarting poll")
+        self.restart_poll('alpha')
 
     def start_poll(self, poll_type='alpha'):
         """
         Starts a poll and then starts watching input.
         """
 
-        if not self.base.has_initialized:
-            self.base.initialize()
-
         self.poll_start_time = time.time()
         self.responses = 0
-        self.base.start_poll(poll_type)
-        self.poll_stopped = False
+
+        self.restart_poll(poll_type)
+
+        self.display_update_loop()
 
         # This blocks until self.poll_stopped is set to true
         self.watch_input()
 
         # After watch input exits, we want to stop the poll
         self.stop_poll()
+
+    def restart_poll(self, poll_type='alpha'):
+        if not self.base.has_initialized:
+            self.base.initialize()
+
+        self.base.start_poll(poll_type)
+        self.poll_stopped = False
 
     def stop_poll(self):
         self.poll_stopped = True
@@ -465,17 +474,23 @@ class IClickerPoll(object):
         Constantly polls the USB device for iClicker responses.
         """
 
-        self.display_update_loop()
         while self.poll_stopped is False:
             with self.base.usb_lock:
-                response = self.base.read(50)
+                try:
+                    response = self.base.read(50)
+                except:
+                    # Because we restart inside USB lock, we know that another thread's while self.poll_stopped will not be false
+                    self.restart()
+                    assert self.poll_stopped == False
+                    continue
             # If there is no response, do nothing
             if response is None:
+                # Sleep a bit so that USB lock is not locked all the time,
+                # this makes display be updated regularly even on multi-core machines
+                time.sleep(0.01)
                 continue
             for info in response.response_info():
                 self.response(Response(info['clicker_id'], info['response'], time.time(), info['seq_num']))
-
-            self.update_display()
 
     def display_update_loop(self, interval=1):
         """
@@ -494,7 +509,6 @@ class IClickerPoll(object):
     def response(self, response):
         self.responses += 1
         print(response)
-
 
 # This is a callback that stops the poll, since start a poll is a blocking operation
 def close_pole(poll):
@@ -549,6 +563,7 @@ if __name__ == '__main__':
             poll = IClickerPoll(base, client)
             poll.start_poll('alpha')
         finally:
+            # On an exception we also want to close Meteor connection
             close(2)
 
     def close(exit=0):
