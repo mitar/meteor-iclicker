@@ -589,8 +589,6 @@ if __name__ == '__main__':
     def connected():
         print("[Meteor] Connected")
 
-        onConnected.set()
-
     client.on('connected', connected)
 
     def closed(code, reason):
@@ -625,7 +623,9 @@ if __name__ == '__main__':
 
     client.connect()
 
-    onConnected.wait()
+    # We wait in a loop so that signals can be delivered
+    while onConnected.wait(0.1) is None:
+        pass
 
     if exit_code is None:
         def login_callback(error, data):
@@ -642,7 +642,9 @@ if __name__ == '__main__':
         else:
             subscribe()
 
-        onReady.wait()
+        # We wait in a loop so that signals can be delivered
+        while onReady.wait(0.1) is None:
+            pass
 
     if exit_code is None:
         try:
