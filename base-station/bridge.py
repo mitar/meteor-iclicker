@@ -402,7 +402,8 @@ class IClickerPoll(object):
 
         with self.base.usb_lock:
             try:
-                out_string = "TODO"
+                print(self.client.find('display'))
+                out_string = (self.client.find_one('display') or {}).get('line', '')[0:16]
                 self.base.set_screen(out_string, line=1)
             except:
                 # Because we restart inside USB lock, we know that another thread's while self.poll_stopped will not be false
@@ -510,6 +511,12 @@ class IClickerPoll(object):
         self.responses += 1
         print(response)
 
+        def callback_function(error, result):
+            if error:
+                print("[Meteor] iclicker-vote error {}".format(error))
+
+        self.client.call('iclicker-vote', [response.clicker_id, response.response, response.click_time], callback_function)
+
 # This is a callback that stops the poll, since start a poll is a blocking operation
 def close_pole(poll):
     print("Stopping poll")
@@ -530,41 +537,30 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.frequency:
-        freq1 = args.frequency[0].lower()
-        freq2 = args.frequency[1].lower()
-        if freq1 not in ('a', 'b', 'c', 'd') or freq2 not in ('a', 'b', 'c', 'd'):
-            raise ValueError("Frequency combination '{0}{1}' is not valid".format(freq1, freq2))
+    freq1 = args.frequency[0].lower()
+    freq2 = args.frequency[1].lower()
+    if freq1 not in ('a', 'b', 'c', 'd') or freq2 not in ('a', 'b', 'c', 'd'):
+        raise ValueError("Frequency combination '{0}{1}' is not valid".format(freq1, freq2))
 
     if (args.username is not None and args.password is None) or (args.username is None and args.password is not None):
         raise ValueError("Both username and password have to be specified for server login.")
+
+    onConnected = threading.Event()
+    onReady = threading.Event()
 
     base = None
     poll = None
     client = None
     exit_code = None
 
-    def open():
-        global base
-        global poll
+    def subscribe():
+        def subscription_callback(error):
+            if error:
+                print("[Meteor] display subscription error {}".format(error))
+                exit(2)
+            onReady.set()
 
-        # Already initialized
-        if base is not None:
-            return
-
-        try:
-            print("Finding iClicker Base")
-            base = IClickerBase()
-            base.get_base()
-            print("Initializing iClicker Base")
-            base.initialize(freq1, freq2)
-
-            print("Starting poll")
-            poll = IClickerPoll(base, client)
-            poll.start_poll('alpha')
-        finally:
-            # On an exception we also want to close Meteor connection
-            close(2)
+        client.subscribe('display', callback=subscription_callback)
 
     def close(exit=0):
         global poll
@@ -579,7 +575,12 @@ if __name__ == '__main__':
             client.close()
             client = None
 
-        exit_code = exit
+        if exit_code is None:
+            exit_code = exit
+
+        # To make sure we are not waiting anymore
+        onConnected.set()
+        onReady.set()
 
     signal.signal(signal.SIGINT, lambda *x: close(0))
 
@@ -588,18 +589,7 @@ if __name__ == '__main__':
     def connected():
         print("[Meteor] Connected")
 
-        def login_callback(error, data):
-            if error:
-                print("[Meteor] Login failed {}".format(error))
-                close(1)
-            else:
-                print("[Meteor] Login succeeded {}".format(data))
-                open()
-
-        if args.username is not None and args.password is not None:
-            client.login(args.username, args.password, login_callback)
-        else:
-            open()
+        onConnected.set()
 
     client.on('connected', connected)
 
@@ -635,10 +625,39 @@ if __name__ == '__main__':
 
     client.connect()
 
-    while True:
-        time.sleep(1)
-        if exit_code is not None:
-            break
+    onConnected.wait()
+
+    if exit_code is None:
+        def login_callback(error, data):
+            if error:
+                print("[Meteor] Login failed {}".format(error))
+                close(1)
+                onReady.set()
+            else:
+                print("[Meteor] Login succeeded {}".format(data))
+                subscribe()
+
+        if args.username is not None and args.password is not None:
+            client.login(args.username, args.password, login_callback)
+        else:
+            subscribe()
+
+        onReady.wait()
+
+    if exit_code is None:
+        try:
+            print("Finding iClicker Base")
+            base = IClickerBase()
+            base.get_base()
+            print("Initializing iClicker Base")
+            base.initialize(freq1, freq2)
+
+            print("Starting poll")
+            poll = IClickerPoll(base, client)
+            poll.start_poll('alpha')
+        finally:
+            # On an exception we also want to close Meteor connection
+            close(3)
 
     # Wait a bit to cleanup
     time.sleep(1)
