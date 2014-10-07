@@ -2,7 +2,7 @@
 # with one field "line" of length at most 16.
 displayCollection = new Meteor.Collection null
 
-CLICKER_ID_REGEX = new RegExp '\\d{8}'
+CLICKER_ID_REGEX = new RegExp '[0-9A-Z]{8}'
 # F means retract
 RESPONSE_REGEX = new RegExp '[ABCDEF]'
 
