@@ -1,0 +1,7 @@
+<template name="index">
+  <ul>
+    {{#each meetings}}
+      <li><a href="{{pathFor route='meeting'}}">{{name}}</a></li>
+    {{/each}}
+  </ul>
+</template>

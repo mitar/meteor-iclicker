@@ -8,4 +8,6 @@ coffeescript
 audit-argument-checks
 peerlibrary:peerdb
 mizzao:sharejs
+peerlibrary:middleware
+iron:router@1.0.0-pre3
 
