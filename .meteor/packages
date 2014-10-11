@@ -6,4 +6,6 @@
 meteor-platform
 coffeescript
 audit-argument-checks
+peerlibrary:peerdb
+mizzao:sharejs
 
