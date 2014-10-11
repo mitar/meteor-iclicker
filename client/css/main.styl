@@ -1,0 +1,46 @@
+textarea
+  background none
+  border none
+  overflow auto
+  outline none
+  box-shadow none
+  resize none
+  margin 0
+  padding 15px 15px 0 15px
+  width calc(100% - 30px)
+
+.meeting
+  .name
+    margin 30px 0
+
+  .agenda-item
+    margin 60px 0
+    border 1px solid #ddd
+    border-radius 4px
+
+    .body
+      border-bottom 1px solid #ddd
+
+      .progress
+        margin-bottom 0
+        border-radius 0
+
+    table
+      width 100%
+      border-collapse collapse
+      border-style hidden
+
+      td, th
+        border 1px solid #ddd
+
+      .pros.pad
+        background-color #f3fff3
+
+      .cons.pad
+        background-color #fff3f3
+
+      .notes.pad
+        background-color #f9f9f9
+
+  .agenda-item.highlighted
+    border 3px solid #3cc
