@@ -6,12 +6,14 @@
         {{> agendaItem}}
       {{/each}}
     </div>
+  </div>
+  {{#if curentUserIsFacilitator}}
     <div class="row">
       <div class="span12 addAgendaItem">
         {{> addAgendaItem}}
       </div>
     </div>
-  </div>
+  {{/if}}
 </template>
 
 <template name="addMeeting">

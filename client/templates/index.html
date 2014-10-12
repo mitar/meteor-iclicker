@@ -8,9 +8,11 @@
       </ul>
     </div>
   </div>
-  <div class="row">
-    <div class="span12 addMeeting">
-      {{> addMeeting}}
+  {{#if curentUserIsFacilitator}}
+    <div class="row">
+      <div class="span12 addMeeting">
+        {{> addMeeting}}
+      </div>
     </div>
-  </div>
+  {{/if}}
 </template>
