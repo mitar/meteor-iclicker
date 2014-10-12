@@ -6,6 +6,7 @@ binary-heap@1.0.0
 blaze-tools@1.0.0
 blaze@2.0.1
 boilerplate-generator@1.0.0
+bootstrap@1.0.1
 callback-hook@1.0.0
 check@1.0.1
 coffeescript@1.0.3
@@ -61,6 +62,7 @@ routepolicy@1.0.1
 session@1.0.2
 spacebars-compiler@1.0.2
 spacebars@1.0.2
+stylus@1.0.4
 templating@1.0.7
 tracker@1.0.2
 ui@1.0.3

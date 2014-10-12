@@ -1,6 +1,28 @@
 <template name="agendaItem">
-  <div class="agenda-item">
-    Action item: {{actionItem}}, description: {{description}}
+  <div class="agenda-item {{#if highlighted}}highlighted{{/if}}">
+    <div class="body">
+      <textarea>Cancel our subscription to the New York Times.</textarea>
+      <div class="progress">
+        <div class="bar bar-success" style="width: 35%;"></div>
+        <div class="bar bar-danger" style="width: 20%;"></div>
+        <div class="bar bar-warning" style="width: 10%;"></div>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <td class="pros pad">
+          <textarea>Pros</textarea>
+        </td>
+        <td class="cons pad">
+          <textarea>Cons</textarea>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" class="notes pad">
+          <textarea>Notes</textarea>
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 
