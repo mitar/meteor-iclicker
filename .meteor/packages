@@ -13,3 +13,6 @@ iron:router@1.0.0-pre3
 underscore
 stylus
 bootstrap
+logging
+accounts-password
+
