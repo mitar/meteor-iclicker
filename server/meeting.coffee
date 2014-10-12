@@ -1,3 +1,15 @@
+Meteor.methods
+  'create-meeting': (name) ->
+    check name, NonEmptyString
+
+    throw new Meteor.Error 401, "User not signed in." unless @userId
+
+    Meeting.documents.insert
+      createdAt: new Date()
+      facilitator:
+        _id: @userId
+      name: name
+
 new PublishEndpoint 'meeting-by-id', (meetingId) ->
   check meetingId, DocumentId
 

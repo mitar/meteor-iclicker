@@ -1,3 +1,13 @@
 <template name="agendaItem">
-  
+  <div class="agenda-item">
+    Action item: {{actionItem}}, description: {{description}}
+  </div>
+</template>
+
+<template name="addAgendaItem">
+  <form>
+    <label><input type="checkbox" class="action-item"> Action item</label>
+    <label>Description<textarea class="description"></textarea></label>
+    <button type="submit">Add</button>
+  </form>
 </template>

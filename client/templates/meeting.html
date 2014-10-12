@@ -1,6 +1,14 @@
 <template name="meeting">
   <h1>{{name}}</h1>
-  {{#each items}}
+  {{#each agendaItems}}
     {{> agendaItem}}
   {{/each}}
+  {{> addAgendaItem}}
+</template>
+
+<template name="addMeeting">
+  <form>
+    <label>Name: <input type="text" class="name" /></label>
+    <button type="submit">Add</button>
+  </form>
 </template>

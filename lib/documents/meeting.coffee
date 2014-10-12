@@ -3,11 +3,8 @@ class @Meeting extends Document
   # facilitator:
   #   _id: User id
   # name: text
-  # items: list of
-  #   _id: AgendaItem id
 
   @Meta
     name: 'Meeting'
     fields: =>
       facilitator: @ReferenceField User
-      items: [@ReferenceField AgendaItem]
