@@ -1,16 +1,14 @@
 <template name="meeting">
-  <div class="container">
+  <div class="row">
+    <div class="span12 meeting">
+      <h4 class="name">{{name}}</h4>
+      {{#each agendaItems}}
+        {{> agendaItem}}
+      {{/each}}
+    </div>
     <div class="row">
-      <div class="span12 meeting">
-        <h4 class="name">{{name}}</h4>
-        {{#each agendaItems}}
-          {{> agendaItem}}
-        {{/each}}
-      </div>
-      <div class="row">
-        <div class="span12 meeting">
-          {{> addAgendaItem}}
-        </div>
+      <div class="span12 addAgendaItem">
+        {{> addAgendaItem}}
       </div>
     </div>
   </div>
