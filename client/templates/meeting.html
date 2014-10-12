@@ -3,14 +3,13 @@
     <div class="row">
       <div class="span12 meeting">
         <h4 class="name">{{name}}</h4>
-        {{#each items}}
+        {{#each agendaItems}}
           {{> agendaItem}}
         {{/each}}
       </div>
       <div class="row">
         <div class="span12 meeting">
-            {{> addAgendaItem}}
-
+          {{> addAgendaItem}}
         </div>
       </div>
     </div>
