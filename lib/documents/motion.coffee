@@ -16,7 +16,7 @@ class @Motion extends Document
   # failAfter: date
   # isOpen: boolean
   # isApproved: boolean
-  # body: textId
+  # motion: text
   # pros: textId
   # cons: textId
   # notes: textId
@@ -32,14 +32,14 @@ class @Motion extends Document
   #   castAt: date
   #   voter:
   #     _id: User id
-  #  veto: list of
-  #    castAt: date
-  #    voter:
-  #      _id: User id
-  #  yesCount: number
-  #  noCount: number
-  #  abstainCount: number
-  #  vetoCount: number
+  # veto: list of
+  #   castAt: date
+  #   voter:
+  #     _id: User id
+  # yesCount: number
+  # noCount: number
+  # abstainCount: number
+  # vetoCount: number
 
   @Meta
     name: 'Motion'
@@ -47,14 +47,18 @@ class @Motion extends Document
       author: @ReferenceField User
       meeting: @ReferenceField Meeting
       agendaItem: @ReferenceField AgendaItem
-      yes:
+      yes: [
         voter: @ReferenceField User
-      no:
+      ]
+      no: [
         voter: @ReferenceField User
-      abstain:
+      ]
+      abstain: [
         voter: @ReferenceField User
-      veto:
+      ]
+      veto: [
         voter: @ReferenceField User
+      ]
       yesCount: @GeneratedField 'self', ['yes'], counter 'yes'
       noCount: @GeneratedField 'self', ['no'], counter 'no'
       abstainCount: @GeneratedField 'self', ['abstain'], counter 'abstain'

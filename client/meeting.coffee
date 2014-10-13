@@ -6,11 +6,13 @@ Template.addMeeting.events
   'submit form': (event, template) ->
     event.preventDefault()
 
-    name = template.$('.name').val()
+    name = template.$('.name').val().trim()
 
     return unless name
 
     Meteor.call 'create-meeting', name, (error) ->
-      alert error if error
+      return alert error if error
+
+      template.$('.name').val('')
 
     return # Make sure CoffeeScript does not return anything

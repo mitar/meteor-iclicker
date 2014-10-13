@@ -1,3 +1,4 @@
+# TODO: We should also add agenda item time length and then have a clock for it
 class @AgendaItem extends Document
   # createdAt: time of creation
   # author:
@@ -6,6 +7,7 @@ class @AgendaItem extends Document
   #   _id: Meeting id
   # actionItem: boolean
   # description: text
+  # notes: textId for notes for discussion item
 
   @Meta
     name: 'AgendaItem'

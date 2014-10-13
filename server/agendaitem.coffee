@@ -16,6 +16,7 @@ Meteor.methods
         _id: meetingId
       actionItem: actionItem
       description: description
+      notes: Random.id() unless actionItem
 
 new PublishEndpoint 'agendaitems-by-meeting-id', (meetingId) ->
   check meetingId, DocumentId

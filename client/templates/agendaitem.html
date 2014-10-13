@@ -1,6 +1,5 @@
 <template name="agendaItem">
   <div class="agenda-item">
-    Action item: {{actionItem}}, description: {{description}}
     {{#if actionItem}}
       {{> actionItem}}
     {{else}}
@@ -10,19 +9,30 @@
 </template>
 
 <template name="actionItem">
-  {{#each motions}}
-    {{> motion}}
-  {{/each}}
+  <div class="action-item">
+    <h5 class="description">{{description}} (action item)</h5>
+    {{#each motions}}
+      {{> motion}}
+    {{/each}}
+    {{#if currentUserId}}
+      <div class="addMotion">
+        {{> addMotion}}
+      </div>
+    {{/if}}
+  </div>
 </template>
 
 <template name="discussionItem">
-
+  <div class="discussion-item">
+    <h5 class="description">{{description}} (discussion item)</h5>
+    {{> sharejsText docid=notes}}
+  </div>
 </template>
 
 <template name="addAgendaItem">
   <form>
     <label><input type="checkbox" class="action-item"> Action item</label>
     <label>Description<textarea class="description"></textarea></label>
-    <button type="submit">Add</button>
+    <button type="submit">Add agenda item</button>
   </form>
 </template>
