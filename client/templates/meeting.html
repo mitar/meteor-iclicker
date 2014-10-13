@@ -2,9 +2,11 @@
   <div class="row">
     <div class="span12 meeting">
       <h4 class="name">{{name}}</h4>
-      {{#each agendaItems}}
-        {{> agendaItem}}
-      {{/each}}
+      <div class="agenda-items {{#if currentUserIsFacilitator}}draggable{{/if}}">
+        {{#each agendaItems}}
+          {{> agendaItem}}
+        {{/each}}
+      </div>
     </div>
   </div>
   {{#if currentUserIsFacilitator}}

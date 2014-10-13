@@ -16,4 +16,5 @@ bootstrap
 logging
 accounts-password
 accounts-ui
+peerlibrary:directcollection
 

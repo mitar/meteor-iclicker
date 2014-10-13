@@ -1,3 +1,5 @@
+@import nib
+
 textarea
   background none
   border none
@@ -49,3 +51,17 @@ textarea
   position absolute
   right 16px
   top 12px
+
+/* We use both ui-sortable-handle and agenda-item because sometimes
+   ui-sortable-handle is not set if sortable was initialized before
+   Meteor added elements. */
+.ui-sortable-handle.draggable
+.agenda-item.draggable
+  cursor -moz-grab
+  cursor -webkit-grab
+  cursor grab
+
+.ui-sortable-helper.draggable
+  cursor -moz-grabbing
+  cursor -webkit-grabbing
+  cursor grabbing

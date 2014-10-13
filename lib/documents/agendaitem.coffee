@@ -5,6 +5,7 @@ class @AgendaItem extends Document
   #   _id: User id
   # meeting:
   #   _id: Meeting id
+  # order: order among all agenda items for this meeting
   # actionItem: boolean
   # description: text
   # notes: textId for notes for discussion item

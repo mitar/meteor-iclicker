@@ -3,6 +3,7 @@ Meteor.methods
     check name, NonEmptyString
 
     throw new Meteor.Error 401, "User not signed in." unless @userId
+    throw new Meteor.Error 403, "User is not a facilitator." unless User.documents.findOne(@userId, fields: isFacilitator: 1)?.isFacilitator
 
     Meeting.documents.insert
       createdAt: new Date()
