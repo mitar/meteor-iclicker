@@ -1,7 +1,7 @@
 [
   {
     "email": "test@example.com",
-    "isFacilitator": false
+    "isFacilitator": true
   },
   {
     "email": "another@example.com"
