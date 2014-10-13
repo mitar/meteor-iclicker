@@ -5,7 +5,8 @@ Router.route '/',
     Meteor.subscribe 'meetings',
       onError: (error) -> alert error
 
-Router.route '/meeting/:_id',
+# TODO: Slug is not really optional, why?
+Router.route '/meeting/:_id/:slug?',
   name: 'meeting'
   template: 'meeting'
   waitOn: ->
@@ -19,6 +20,17 @@ Router.route '/meeting/:_id',
     ]
   data: ->
     Meeting.documents.findOne @params._id
+  onBeforeAction: ->
+    meeting = @data()
+
+    return @next() unless meeting
+
+    # @params.slug is null if slug is not present in location, so we use
+    # null when meeting.slug is empty string to prevent infinite looping
+    return @next() if (meeting.slug or null) is @params.slug
+
+    # TODO: Replace current page with the correct slug, without keeping tokens location in the history
+    @redirect 'meeting', meeting
 
 Router.route '/reset-password/:resetPasswordToken',
   action: ->

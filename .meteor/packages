@@ -17,4 +17,5 @@ logging
 accounts-password
 accounts-ui
 peerlibrary:directcollection
+peerlibrary:urlify2
 
