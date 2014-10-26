@@ -1,11 +1,12 @@
-Template.actionItem.motions = ->
-  Motion.documents.find
-    'agendaItem._id': @_id
-  ,
-    sort: [
-      # The oldest motion first
-      ['createdAt', 'asc']
-    ]
+Template.actionItem.helpers
+  motions: ->
+    Motion.documents.find
+      'agendaItem._id': @_id
+    ,
+      sort: [
+        # The oldest motion first
+        ['createdAt', 'asc']
+      ]
 
 Template.addAgendaItem.events
   'submit form': (event, template) ->
