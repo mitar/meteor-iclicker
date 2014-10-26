@@ -5,7 +5,6 @@ Router.route '/',
     Meteor.subscribe 'meetings',
       onError: (error) -> alert error
 
-# TODO: Slug is not really optional, why?
 Router.route '/meeting/:_id/:slug?',
   name: 'meeting'
   template: 'meeting'
@@ -25,23 +24,22 @@ Router.route '/meeting/:_id/:slug?',
 
     return @next() unless meeting
 
-    # @params.slug is null if slug is not present in location, so we use
-    # null when meeting.slug is empty string to prevent infinite looping
-    return @next() if (meeting.slug or null) is @params.slug
+    # @params.slug is undefined if slug is not present in location, so we normalize
+    # both meeting.slug and @params.slug to prevent any infinite looping.
+    return @next() if (meeting.slug or null) is (@params.slug or null)
 
-    # TODO: Replace current page with the correct slug, without keeping tokens location in the history
-    @redirect 'meeting', meeting
+    @redirect 'meeting', meeting, replaceState: true
 
 Router.route '/reset-password/:resetPasswordToken',
   action: ->
-    # Make sure nobody is logged in, it would be confusing otherwise
+    # Make sure nobody is logged in, it would be confusing otherwise.
     # TODO: How to make it sure we do not log in in the first place? How could we set autoLoginEnabled in time? Because this logs out user in all tabs
     Meteor.logout()
 
     Accounts._loginButtonsSession.set 'resetPasswordToken', @params.resetPasswordToken
 
-    # TODO: Replace current page with the index page, without keeping tokens location in the history
-    @redirect 'index'
+    # Replacing current page with the index page, without keeping tokens location in the history.
+    @redirect 'index', {}, replaceState: true
 
 Router.route '/enroll-account/:enrollAccountToken',
   action: ->
@@ -51,5 +49,5 @@ Router.route '/enroll-account/:enrollAccountToken',
 
     Accounts._loginButtonsSession.set 'enrollAccountToken', @params.enrollAccountToken
 
-    # TODO: Replace current page with the index page, without keeping tokens location in the history
-    @redirect 'index'
+    # Replacing current page with the index page, without keeping tokens location in the history.
+    @redirect 'index', {}, replaceState: true
